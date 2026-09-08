@@ -1,0 +1,336 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                  BASES DE DATOS EN DOCKER - PROYECTO 2027-1                ║
+║                        Bases de Datos Avanzadas                             ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 🗄️  ESTRUCTURA GENERAL
+═════════════════════════════════════════════════════════════════════════════
+
+Se han creado 2 bases de datos Oracle en Docker:
+
+1. ORACLE 19c (Linux) - OLTP
+   └─ Propósito: Transacciones (OLTP)
+   └─ Puerto: 1521
+
+2. ORACLE 18c (Windows) - OLAP
+   └─ Propósito: Análisis (OLAP)
+   └─ Puerto: 1522
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 📊 ORACLE LINUX 19c (OLTP)
+═════════════════════════════════════════════════════════════════════════════
+
+DATOS DE CONEXIÓN:
+  Contenedor:  oracle-linux-19c
+  Host:        localhost
+  Puerto:      1521
+  SID:         LINUXDB
+  PDB:         LINUXPDB
+
+USUARIO DE SISTEMA:
+  Usuario:     sys
+  Contraseña:  Oracle123!
+  Rol:         SYSDBA
+
+USUARIOS DE APLICACIÓN:
+  ┌─────────────────────────────────────────┐
+  │ Usuario:      usuario_oltp              │
+  │ Contraseña:   Pass123!                  │
+  │ Tablespace:   ts_oltp_data              │
+  │ Privilegios:  CREATE TABLE, PROCEDURE   │
+  └─────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────┐
+  │ Usuario:      admin_bd                  │
+  │ Contraseña:   Admin123!                 │
+  │ Privilegios:  DBA (completo)            │
+  └─────────────────────────────────────────┘
+
+TABLESPACES CREADOS:
+  • ts_oltp_data   (500 MB) - Datos de aplicación
+  • ts_oltp_index  (200 MB) - Índices
+  • ts_oltp_temp   (100 MB) - Operaciones temporales
+
+UBICACIÓN DE ARCHIVOS:
+  /opt/oracle/oradata/linuxdb/
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 💼 ORACLE WINDOWS 18c (OLAP)
+═════════════════════════════════════════════════════════════════════════════
+
+DATOS DE CONEXIÓN:
+  Contenedor:  oracle-windows-18c
+  Host:        localhost
+  Puerto:      1522
+  SID:         WINDOWSDB
+  PDB:         WINDOWSPDB
+
+USUARIO DE SISTEMA:
+  Usuario:     sys
+  Contraseña:  Oracle123!
+  Rol:         SYSDBA
+
+USUARIOS DE APLICACIÓN:
+  ┌─────────────────────────────────────────┐
+  │ Usuario:      usuario_olap              │
+  │ Contraseña:   Pass123!                  │
+  │ Tablespace:   ts_olap_data              │
+  │ Privilegios:  CREATE TABLE, PROCEDURE   │
+  └─────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────┐
+  │ Usuario:      admin_olap                │
+  │ Contraseña:   AdminOlap123!             │
+  │ Privilegios:  DBA (completo)            │
+  └─────────────────────────────────────────┘
+
+TABLESPACES CREADOS:
+  • ts_olap_data   (500 MB) - Datos de análisis
+  • ts_olap_index  (200 MB) - Índices
+  • ts_olap_temp   (100 MB) - Operaciones temporales
+
+UBICACIÓN DE ARCHIVOS:
+  C:\oracle\oradata\windowsdb\
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 🚀 PASOS PARA INICIAR LAS BD
+═════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Crear la red Docker
+  $ docker network create oracle-network
+
+PASO 2: Iniciar Oracle Linux 19c
+  $ docker run -d \
+      --name oracle-linux-19c \
+      --network oracle-network \
+      -p 1521:1521 \
+      -e ORACLE_SID=LINUXDB \
+      -e ORACLE_PDB=LINUXPDB \
+      -e ORACLE_PWD=Oracle123! \
+      -v oracle_linux_data:/opt/oracle/oradata \
+      gvenzl/oracle-xe:latest
+
+PASO 3: Iniciar Oracle Windows 18c
+  $ docker run -d \
+      --name oracle-windows-18c \
+      --network oracle-network \
+      -p 1522:1521 \
+      -e ORACLE_SID=WINDOWSDB \
+      -e ORACLE_PDB=WINDOWSPDB \
+      -e ORACLE_PWD=Oracle123! \
+      -v oracle_windows_data:/opt/oracle/oradata \
+      gvenzl/oracle-xe:latest
+
+PASO 4: Esperar 2-3 minutos a que se inicialicen
+  $ docker logs oracle-linux-19c
+  $ docker logs oracle-windows-18c
+
+PASO 5: Conectarse como SYSDBA e inicializar
+  LINUX:
+  $ docker exec -it oracle-linux-19c sqlplus sys/Oracle123! as sysdba
+  SQL> @02_init_oltp_linux.sql
+
+  WINDOWS:
+  $ docker exec -it oracle-windows-18c sqlplus sys/Oracle123! as sysdba
+  SQL> @03_init_olap_windows.sql
+
+PASO 6: Verificar configuración
+  SQL> @05_verificacion_y_pruebas.sql
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 🔗 CONEXIÓN CON HERRAMIENTAS EXTERNAS
+═════════════════════════════════════════════════════════════════════════════
+
+SQL DEVELOPER:
+  
+  Conexión OLTP (Linux):
+  ├─ Nombre:     OLTP
+  ├─ Nombre usuario: sys
+  ├─ Contraseña:    Oracle123!
+  ├─ Nombre máquina: localhost
+  ├─ Puerto:        1521
+  ├─ SID:           LINUXDB
+  └─ Rol:           SYSDBA
+
+  Conexión OLAP (Windows):
+  ├─ Nombre:     OLAP
+  ├─ Nombre usuario: sys
+  ├─ Contraseña:    Oracle123!
+  ├─ Nombre máquina: localhost
+  ├─ Puerto:        1522
+  ├─ SID:           WINDOWSDB
+  └─ Rol:           SYSDBA
+
+DBEAVER:
+  
+  Conexión OLTP (Linux):
+  ├─ Server Host:    localhost
+  ├─ Port:           1521
+  ├─ Database:       LINUXDB
+  ├─ Username:       sys
+  ├─ Password:       Oracle123!
+  ├─ Role:           SYSDBA
+  └─ Driver:         Oracle Thin
+
+  Conexión OLAP (Windows):
+  ├─ Server Host:    localhost
+  ├─ Port:           1522
+  ├─ Database:       WINDOWSDB
+  ├─ Username:       sys
+  ├─ Password:       Oracle123!
+  ├─ Role:           SYSDBA
+  └─ Driver:         Oracle Thin
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 📋 COMANDOS ÚTILES
+═════════════════════════════════════════════════════════════════════════════
+
+Ver estado de los contenedores:
+  $ docker ps -a | grep oracle
+
+Ver logs detallados:
+  $ docker logs -f oracle-linux-19c
+  $ docker logs -f oracle-windows-18c
+
+Entrar al bash del contenedor:
+  $ docker exec -it oracle-linux-19c bash
+  $ docker exec -it oracle-windows-18c bash
+
+Conectarse a SQL*Plus:
+  $ docker exec -it oracle-linux-19c sqlplus sys/Oracle123! as sysdba
+  $ docker exec -it oracle-windows-18c sqlplus sys/Oracle123! as sysdba
+
+Conectarse como usuario_oltp:
+  $ docker exec -it oracle-linux-19c sqlplus usuario_oltp/Pass123!
+
+Conectarse como usuario_olap:
+  $ docker exec -it oracle-windows-18c sqlplus usuario_olap/Pass123!
+
+Detener los contenedores:
+  $ docker stop oracle-linux-19c oracle-windows-18c
+
+Reiniciar los contenedores:
+  $ docker restart oracle-linux-19c oracle-windows-18c
+
+Eliminar los contenedores:
+  $ docker rm oracle-linux-19c oracle-windows-18c
+
+Eliminar los volúmenes:
+  $ docker volume rm oracle_linux_data oracle_windows_data
+
+Eliminar la red:
+  $ docker network rm oracle-network
+
+
+═════════════════════════════════════════════════════════════════════════════
+ ✅ VERIFICACIÓN
+═════════════════════════════════════════════════════════════════════════════
+
+Para verificar que todo está funcionando correctamente:
+
+1. Conectarse a cada BD:
+   $ docker exec -it oracle-linux-19c sqlplus sys/Oracle123! as sysdba
+   $ docker exec -it oracle-windows-18c sqlplus sys/Oracle123! as sysdba
+
+2. Ejecutar comandos de verificación:
+   SQL> SELECT name FROM v$database;
+   SQL> SELECT tablespace_name FROM dba_tablespaces WHERE tablespace_name LIKE 'TS_%';
+   SQL> SELECT username FROM dba_users WHERE created > SYSDATE - 1;
+
+3. Crear tabla de prueba:
+   SQL> CREATE TABLE prueba (id NUMBER, datos VARCHAR2(100));
+   SQL> INSERT INTO prueba VALUES (1, 'Funciona!');
+   SQL> SELECT * FROM prueba;
+   SQL> COMMIT;
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 📁 ARCHIVOS ENTREGADOS
+═════════════════════════════════════════════════════════════════════════════
+
+01_crear_contenedores_docker.sh
+   → Script bash para crear ambos contenedores automáticamente
+
+02_init_oltp_linux.sql
+   → Script SQL para inicializar BD OLTP (Linux)
+   → Crea tablespaces, usuarios y permisos
+
+03_init_olap_windows.sql
+   → Script SQL para inicializar BD OLAP (Windows)
+   → Crea tablespaces, usuarios y permisos
+
+04_GUIA_PASO_A_PASO.md
+   → Guía detallada con pasos para configurar todo
+   → Incluye ejemplos y comandos
+
+05_verificacion_y_pruebas.sql
+   → Script para verificar que las BD están funcionando
+   → Incluye pruebas de creación de tablas
+
+06_RESUMEN_BASES_DATOS.txt
+   → Este archivo, con toda la información consolidada
+
+
+═════════════════════════════════════════════════════════════════════════════
+ 🎯 PRÓXIMOS PASOS PARA TU PROYECTO
+═════════════════════════════════════════════════════════════════════════════
+
+Cuando tengas definido tu esquema CRUD:
+
+1. Conectarse como usuario_oltp (para OLTP):
+   $ docker exec -it oracle-linux-19c sqlplus usuario_oltp/Pass123!
+
+2. Crear tus tablas en BD OLTP:
+   SQL> CREATE TABLE empleados (...);
+   SQL> CREATE TABLE departamentos (...);
+
+3. Conectarse como usuario_olap (para OLAP):
+   $ docker exec -it oracle-windows-18c sqlplus usuario_olap/Pass123!
+
+4. Crear tus tablas de análisis en BD OLAP:
+   SQL> CREATE TABLE reportes (...);
+
+5. Implementar tu aplicación CRUD:
+   - Usar WAMP/LAMP para conectar desde PHP
+   - Usar SQL Developer para desarrollo
+   - Usar scripts SQL para migraciones
+
+
+═════════════════════════════════════════════════════════════════════════════
+ ⚠️  NOTAS IMPORTANTES
+═════════════════════════════════════════════════════════════════════════════
+
+1. Las contraseñas están en este archivo por conveniencia de desarrollo.
+   En producción, usa contraseñas más seguras.
+
+2. Los volúmenes de Docker son persistentes. Tus datos se mantienen
+   aunque detengas los contenedores.
+
+3. Ambos contenedores están en la misma red (oracle-network) pero
+   son instancias independientes.
+
+4. Espera 2-3 minutos después de crear los contenedores antes de intentar
+   conectarte.
+
+5. Si necesitas hacer backup de tus datos:
+   $ docker volume inspect oracle_linux_data
+   $ docker volume inspect oracle_windows_data
+
+6. Las imágenes de Docker (gvenzl/oracle-xe) son gratuitas y ligeras
+   comparadas con instalaciones nativas.
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+                    ¡Listo para comenzar tu proyecto! 🚀
+
+═════════════════════════════════════════════════════════════════════════════

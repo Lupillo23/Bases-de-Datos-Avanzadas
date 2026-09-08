@@ -1,0 +1,232 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║          COMANDOS PARA WINDOWS - Crear Bases de Datos en Docker             ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+NOTA IMPORTANTE:
+Si estás usando Windows, tienes 3 opciones:
+
+1. OPCIÓN A: Usar PowerShell (RECOMENDADO)
+   └─ Ejecutar: 01_crear_contenedores_windows.ps1
+
+2. OPCIÓN B: Usar Command Prompt (CMD)
+   └─ Ejecutar: 01_crear_contenedores_windows.bat
+
+3. OPCIÓN C: Ejecutar comandos manualmente uno por uno
+   └─ Ver abajo los comandos
+
+
+═════════════════════════════════════════════════════════════════════════════
+ OPCIÓN A: USAR POWERSHELL (RECOMENDADO)
+═════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Abre PowerShell como Administrador
+   • Click derecho en PowerShell
+   • Selecciona "Ejecutar como administrador"
+
+PASO 2: Navega a donde descargaste los archivos
+   PS C:\> cd C:\ruta\a\archivos
+   PS C:\ruta\a\archivos>
+
+PASO 3: Permite ejecutar scripts (si lo pide)
+   PS C:\ruta\a\archivos> Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+
+PASO 4: Ejecuta el script
+   PS C:\ruta\a\archivos> .\01_crear_contenedores_windows.ps1
+
+PASO 5: Espera a que termine (2-3 minutos)
+
+
+═════════════════════════════════════════════════════════════════════════════
+ OPCIÓN B: USAR COMMAND PROMPT (CMD)
+═════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Abre Command Prompt como Administrador
+   • Click derecho en "cmd.exe"
+   • Selecciona "Ejecutar como administrador"
+
+PASO 2: Navega a donde descargaste los archivos
+   C:\> cd ruta\a\archivos
+   C:\ruta\a\archivos>
+
+PASO 3: Ejecuta el script
+   C:\ruta\a\archivos> 01_crear_contenedores_windows.bat
+
+PASO 4: Espera a que termine (2-3 minutos)
+
+
+═════════════════════════════════════════════════════════════════════════════
+ OPCIÓN C: EJECUTAR COMANDOS MANUALMENTE
+═════════════════════════════════════════════════════════════════════════════
+
+Abre Terminal (PowerShell) o CMD como Administrador y copia/pega cada comando:
+
+───────────────────────────────────────────────────────────────────────────
+PASO 1: Crear la red Docker
+───────────────────────────────────────────────────────────────────────────
+
+docker network create oracle-network
+
+
+───────────────────────────────────────────────────────────────────────────
+PASO 2: Crear volúmenes
+───────────────────────────────────────────────────────────────────────────
+
+docker volume create oracle_linux_data
+
+docker volume create oracle_windows_data
+
+
+───────────────────────────────────────────────────────────────────────────
+PASO 3: Iniciar Oracle Linux 19c
+───────────────────────────────────────────────────────────────────────────
+
+IMPORTANTE: Este es UN SOLO comando (cópialo completo de una vez)
+
+docker run -d --name oracle-linux-19c --network oracle-network -p 1521:1521 -e ORACLE_SID=LINUXDB -e ORACLE_PDB=LINUXPDB -e ORACLE_PWD=Oracle123! -v oracle_linux_data:/opt/oracle/oradata gvenzl/oracle-xe:latest
+
+
+───────────────────────────────────────────────────────────────────────────
+PASO 4: Iniciar Oracle Windows 18c
+───────────────────────────────────────────────────────────────────────────
+
+IMPORTANTE: Este es UN SOLO comando (cópialo completo de una vez)
+
+docker run -d --name oracle-windows-18c --network oracle-network -p 1522:1521 -e ORACLE_SID=WINDOWSDB -e ORACLE_PDB=WINDOWSPDB -e ORACLE_PWD=Oracle123! -v oracle_windows_data:/opt/oracle/oradata gvenzl/oracle-xe:latest
+
+
+───────────────────────────────────────────────────────────────────────────
+PASO 5: Verificar que los contenedores estén corriendo
+───────────────────────────────────────────────────────────────────────────
+
+docker ps -a | findstr oracle
+
+Deberías ver dos líneas:
+  • oracle-linux-19c
+  • oracle-windows-18c
+
+Con estado: Up (o creándose si es muy reciente)
+
+
+───────────────────────────────────────────────────────────────────────────
+PASO 6: Ver los logs (espera 2-3 minutos a que inicialicen)
+───────────────────────────────────────────────────────────────────────────
+
+docker logs oracle-linux-19c
+
+docker logs oracle-windows-18c
+
+Deberías ver un mensaje como: "DATABASE IS READY TO USE"
+
+
+═════════════════════════════════════════════════════════════════════════════
+ POSIBLES ERRORES Y SOLUCIONES
+═════════════════════════════════════════════════════════════════════════════
+
+ERROR: "docker: command not found" o "docker is not recognized"
+SOLUCIÓN:
+  • Docker no está instalado o no está en el PATH
+  • Descarga Docker Desktop: https://www.docker.com/products/docker-desktop
+  • Instála y reinicia Windows
+
+ERROR: "Error response from daemon: network oracle-network already exists"
+SOLUCIÓN:
+  • La red ya existe, es normal. Continúa con el siguiente paso
+
+ERROR: "Error response from daemon: Conflict. The container name oracle-linux-19c is already in use"
+SOLUCIÓN:
+  • El contenedor ya existe. Puedes:
+    - Eliminarlo: docker rm oracle-linux-19c
+    - O usa nombres diferentes
+
+ERROR: "timeout waiting for reply"
+SOLUCIÓN:
+  • Docker Desktop no está corriendo
+  • Abre Docker Desktop y espera a que inicialice (puede tomar 1-2 minutos)
+  • Luego ejecuta nuevamente los comandos
+
+ERROR: "The system cannot find the path specified"
+SOLUCIÓN:
+  • Estás en el directorio equivocado
+  • Usa: cd C:\Users\TuUsuario\Downloads (o donde descargaste los archivos)
+
+ERROR: "Pull access denied for gvenzl/oracle-xe"
+SOLUCIÓN:
+  • Asegúrate de tener conexión a internet
+  • Reinicia Docker Desktop
+  • Intenta de nuevo
+
+
+═════════════════════════════════════════════════════════════════════════════
+ VERIFICACIÓN RÁPIDA
+═════════════════════════════════════════════════════════════════════════════
+
+Una vez que los contenedores estén corriendo (status: Up), ejecuta esto
+para verificar que están listos:
+
+docker exec -it oracle-linux-19c sqlplus sys/Oracle123! as sysdba
+
+Si te pide contraseña, ingresa: Oracle123!
+
+Deberías ver el prompt de SQL:
+  SQL>
+
+Si ves el prompt, ¡está funcionando! Escribe EXIT para salir.
+
+
+═════════════════════════════════════════════════════════════════════════════
+ SIGUIENTES PASOS
+═════════════════════════════════════════════════════════════════════════════
+
+1. Una vez que ambos contenedores estén "Up", conectate a cada uno:
+
+   Para Linux (OLTP):
+   docker exec -it oracle-linux-19c sqlplus sys/Oracle123! as sysdba
+
+   Para Windows (OLAP):
+   docker exec -it oracle-windows-18c sqlplus sys/Oracle123! as sysdba
+
+2. En cada uno, ejecuta el script de inicialización:
+
+   SQL> @02_init_oltp_linux.sql     (para Linux)
+   SQL> @03_init_olap_windows.sql   (para Windows)
+
+3. Verifica que todo está bien:
+
+   SQL> @05_verificacion_y_pruebas.sql
+
+
+═════════════════════════════════════════════════════════════════════════════
+ COMANDOS ÚTILES PARA DESPUÉS
+═════════════════════════════════════════════════════════════════════════════
+
+Ver todos los contenedores:
+  docker ps -a
+
+Detener los contenedores:
+  docker stop oracle-linux-19c oracle-windows-18c
+
+Reiniciar los contenedores:
+  docker restart oracle-linux-19c oracle-windows-18c
+
+Eliminar los contenedores (¡cuidado!):
+  docker rm oracle-linux-19c oracle-windows-18c
+
+Ver los logs en tiempo real:
+  docker logs -f oracle-linux-19c
+
+Conectarse al bash del contenedor:
+  docker exec -it oracle-linux-19c bash
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+¿Necesitas ayuda? Verifica:
+
+1. ¿Docker Desktop está abierto y corriendo?
+2. ¿Tienes conexión a internet?
+3. ¿Estás ejecutando como Administrador?
+4. ¿El comando es exactamente como está (respeta mayúsculas/minúsculas)?
+
+═════════════════════════════════════════════════════════════════════════════
